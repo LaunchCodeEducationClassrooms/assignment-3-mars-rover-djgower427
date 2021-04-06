@@ -1,24 +1,44 @@
 class Rover {
-   constructor (position, mode = "NORMAL", generatorWatts = 110){
+   constructor (position){
      this.position = position;
-     this.mode = mode;
-     this.generatorWatts = generatorWatts;
+     this.mode = 'NORMAL';
+     this.generatorWatts = 110;
    }
 
   receiveMessage(message){
-    
-    let results = [];
-    
-    for (let i = 0; i< message.commands.length; i++){
-      results.push(message.commands[i])
-    };
-    
-    return {
-      message: message.name,
-      results: results 
-    }
-  }
+    let newObject = {};
+     newObject["message"] = message.name;
 
+    let results = [];
+
+    let resultsObject = {};
+    
+    let statusObject = {};
+    
+    for (var i = 0; i<message.commands.length; i++){
+      if(message.commands[i].commandType == "STATUS_CHECK"){
+        resultsObject["completed"] = true;
+        statusObject["mode"] = this.mode;
+        statusObject["generatorWatts"]=this.generatorWatts;
+        statusObject["position"] = this.position;
+        resultsObject["roverStatus"] = statusObject;
+        results[i] = resultsObject;
+      } else if(message.commands[i].commandType == "MODE_CHANGE"){
+        this.mode = message.commands[i].value;
+        resultsObject["completed"] = true;
+        results[i] = resultsObject;
+      } else if(message.commands[i].commandType == "MOVE"){
+        if(this.mode == "NORMAL"){
+          this.position = message.commands[i].value;
+          resultsObject["completed"] = true;
+        } else {
+          resultsObject["completed"] = false;
+        } results[i] = resultsObject;
+      }
+    }
+     newObject["results"] = results;
+     return newObject;
+   }
 }
 
 module.exports = Rover;
